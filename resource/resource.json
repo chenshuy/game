@@ -1,0 +1,18 @@
+{
+	"groups":[
+	{
+		"keys":"logo_png,menu_png",
+		"name":"preload"
+	}],
+	"resources":[
+	{
+		"name":"logo_png",
+		"type":"image",
+		"url":"static/common/img/logo.png"
+	},
+	{
+		"name":"menu_png",
+		"type":"image",
+		"url":"static/common/img/menu.png"
+	}]
+}

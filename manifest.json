@@ -10,6 +10,8 @@
 	"game": [
 		"bin-debug/LoadingUI.js",
 		"bin-debug/Main.js",
-		"bin-debug/Platform.js"
+		"bin-debug/Page.js",
+		"bin-debug/Platform.js",
+		"bin-debug/Start.js"
 	]
 }

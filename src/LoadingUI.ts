@@ -26,7 +26,6 @@
 //  EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 //////////////////////////////////////////////////////////////////////////////////////
-
 class LoadingUI extends egret.Sprite implements RES.PromiseTaskReporter {
 
     public constructor() {

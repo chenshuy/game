@@ -29,8 +29,6 @@
 
 class Main extends egret.DisplayObjectContainer {
 
-
-
     public constructor() {
         super();
         this.addEventListener(egret.Event.ADDED_TO_STAGE, this.onAddToStage, this);
@@ -58,18 +56,18 @@ class Main extends egret.DisplayObjectContainer {
             console.log(e);
         })
 
-
-
     }
 
     private async runGame() {
         await this.loadResource()
-        this.createGameScene();
-        const result = await RES.getResAsync("description_json")
-        this.startAnimation(result);
-        await platform.login();
-        const userInfo = await platform.getUserInfo();
-        console.log(userInfo);
+        // this.createGameScene();
+        const startView = new Start();
+        this.stage.addChild(startView);
+        // const result = await RES.getResAsync("description_json")
+        // this.startAnimation(result);
+        // await platform.login();
+        // const userInfo = await platform.getUserInfo();
+        // console.log(userInfo);
 
     }
 
@@ -77,7 +75,7 @@ class Main extends egret.DisplayObjectContainer {
         try {
             const loadingView = new LoadingUI();
             this.stage.addChild(loadingView);
-            await RES.loadConfig("resource/default.res.json", "resource/");
+            await RES.loadConfig("resource/resource.json", "/");
             await RES.loadGroup("preload", 0, loadingView);
             this.stage.removeChild(loadingView);
         }
