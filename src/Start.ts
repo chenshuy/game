@@ -7,14 +7,18 @@ class Start extends egret.DisplayObjectContainer {
         this.addEventListener(egret.Event.ADDED_TO_STAGE, this.onAddToStage, this);
     }
 
-    private onAddToStage(event:egret.Event) {
+    private onAddToStage() {
         var start = game_text.start;
-        console.log(start);
         this.creatBg(start.img);
         start.picture.forEach(element => {
             this.creatImg(element);
         });
+
+        console.log(a.d('a'));
+        // var c = a.b('aa');
+
     }
+
 
     // 加载背景
     private creatBg(item) {

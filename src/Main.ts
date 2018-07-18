@@ -45,11 +45,11 @@ class Main extends egret.DisplayObjectContainer {
         })
 
         egret.lifecycle.onPause = () => {
-            egret.ticker.pause();
+            // egret.ticker.pause();
         }
 
         egret.lifecycle.onResume = () => {
-            egret.ticker.resume();
+            // egret.ticker.resume();
         }
 
         this.runGame().catch(e => {
@@ -61,8 +61,14 @@ class Main extends egret.DisplayObjectContainer {
     private async runGame() {
         await this.loadResource()
         // this.createGameScene();
+
+        // const pageView = new Page();
+        // this.stage.addChild(pageView);
+
         const startView = new Start();
         this.stage.addChild(startView);
+
+
         // const result = await RES.getResAsync("description_json")
         // this.startAnimation(result);
         // await platform.login();
@@ -140,8 +146,6 @@ class Main extends egret.DisplayObjectContainer {
         textfield.x = 172;
         textfield.y = 135;
         this.textfield = textfield;
-
-
     }
 
     /**
