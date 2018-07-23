@@ -52,31 +52,21 @@ class Main extends egret.DisplayObjectContainer {
             // egret.ticker.resume();
         }
 
-        this.runGame().catch(e => {
-            console.log(e);
-        })
-
+        // this.runGame().catch(e => {
+        //     console.log(e);
+        // })
+        this.stage.addChild(BS.startView);
     }
 
     private async runGame() {
-        await this.loadResource()
-        // this.createGameScene();
+        // await this.loadResource();
 
+        // this.createGameScene();
         // const pageView = new Page();
         // this.stage.addChild(pageView);
-
-        const startView = new Start();
-        this.stage.addChild(startView);
-
-
-        // const result = await RES.getResAsync("description_json")
-        // this.startAnimation(result);
-        // await platform.login();
-        // const userInfo = await platform.getUserInfo();
-        // console.log(userInfo);
-
     }
 
+    // 加载
     private async loadResource() {
         try {
             const loadingView = new LoadingUI();

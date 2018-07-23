@@ -1,41 +1,61 @@
-// Page
+// 主页面
 
 class Page extends egret.DisplayObjectContainer {
-
-    private pageData; // page数据
-    private pageI = 0;// 当前场景下标
-    private pageLen; // 场景长度
-
-    private choiceData; // 选项场景
-    private choiceI = 0;// 选项场景下标
-    private choiceLen; // 选项场景长度
-
-    private isChoice = false; // 是否选项场景
-
-    private texts = []; // 文本组
 
     public constructor() {
         super();
         this.addEventListener(egret.Event.ADDED_TO_STAGE, this.onAddToStage, this);
     }
 
+    public pageData; // page数据
+    public pageI = 0;// 当前场景下标
+    private pageLen; // 场景长度
+
+    private choiceData; // 选项场景
+    private choiceI = undefined;// 选项场景下标
+    private choiceLen; // 选项场景长度
+
+    private isChoice = false; // 是否选项场景
+
+    private texts = []; // 文本组
+
+    public skipIn = false;
+
     private onAddToStage() {
         this.stage.frameRate = 60;
-        this.pageData = game_text.page;
+        this.pageData = BS.data.page;
         this.pageLen = this.pageData.length;
-        // this.menu();
+        this.menu();
         this.stage.addEventListener(egret.TouchEvent.TOUCH_TAP, this.onTouchTap, this);
-        this.setPage(this.pageData, this.pageI);
+        !this.skipIn && this.setPage(this.pageData, this.pageI);
     }
 
-    // 创建按钮
+    // 跳转场景
+    public skip(data) {
+        this.pageI = data.page - 1;
+        this.stage.addEventListener(egret.TouchEvent.TOUCH_TAP, this.onTouchTap, this);
+        this.onTouchTap();
+    }
+
+    // 菜单
     private menu() {
-        let menu = this.createBitmapByName("menu_png");
-        menu.width = 50;
-        menu.height = 50;
-        menu.x = this.stage.stageWidth - 20;
-        menu.y = 20;
-        this.addChildAt(menu, 6);
+        BS.menuModule.visible = false;
+        this.stage.addChildAt(BS.menuModule, 9);
+        BS.loadImg('static/common/img/menu.png', function(texture:egret.Texture) {
+            BS.btnMenu = new egret.Bitmap();
+            BS.btnMenu.texture = texture;
+            BS.btnMenu.width = 50;
+            BS.btnMenu.height = 50;
+            BS.btnMenu.x = this.stage.stageWidth - 70;
+            BS.btnMenu.y = 20;
+            this.stage.addChild(BS.btnMenu);
+            BS.btnMenu.touchEnabled = true;
+            BS.btnMenu.addEventListener(egret.TouchEvent.TOUCH_TAP, function(Event) {
+                BS.menuModule.visible = true;
+                BS.btnMenu.visible = false;
+                Event.stopImmediatePropagation()
+            }, this);
+        }, this);
     }
 
     // 切换事件
@@ -60,6 +80,7 @@ class Page extends egret.DisplayObjectContainer {
                 this.setPage(this.choiceData, this.choiceI);
             } else {
                 this.isChoice = false;
+                this.choiceI = undefined;
                 this.pageI++;
                 this.setPage(this.pageData, this.pageI);
             }
@@ -68,8 +89,9 @@ class Page extends egret.DisplayObjectContainer {
             if(this.pageI < this.pageLen) {
                 this.setPage(this.pageData, this.pageI)
             } else {
+                this.pageI--;
                 console.log('结束');
-                this.stage.removeEventListener(egret.TouchEvent.TOUCH_TAP, this.onTouchTap, this, true);
+                this.stage.removeEventListener(egret.TouchEvent.TOUCH_TAP, this.onTouchTap, this);
             }
         }
     }
@@ -112,7 +134,7 @@ class Page extends egret.DisplayObjectContainer {
 
     // 加载背景
     private creatBg(item) {
-        RES.getResByUrl(item.url, function(texture:egret.Texture):void {
+        BS.loadImg(item.url, function(texture:egret.Texture) {
             var bgImg: egret.Bitmap = new egret.Bitmap();
             bgImg.texture = texture;
             var imgWidth = texture.textureWidth;
@@ -132,12 +154,12 @@ class Page extends egret.DisplayObjectContainer {
             bgImg.anchorOffsetY = bgImg.height/2;
             this.addChildAt(bgImg, 0);
             item.effect && this.tweenBg(item.duration, item.delay, item.effect, bgImg);
-        }, this, RES.ResourceItem.TYPE_IMAGE);
+        }, this);
     }
 
     // 加载图片
     private creatImg(item) {
-        RES.getResByUrl(item.img.url, function(texture:egret.Texture):void {
+        BS.loadImg(item.img.url, function(texture:egret.Texture):void {
             var result:egret.Bitmap = new egret.Bitmap();
             result.texture = texture;
             result.x = item.x;
@@ -154,7 +176,7 @@ class Page extends egret.DisplayObjectContainer {
             if(item.effect && item.effect.duration !== 0) {
                 this.tweenBg(item.duration, item.delay, item.effect, result)
             }
-        }, this, RES.ResourceItem.TYPE_IMAGE);
+        }, this);
     }
 
     // 文本
@@ -203,7 +225,7 @@ class Page extends egret.DisplayObjectContainer {
             this.addChildAt(text, 3);
             this.texts.push(text);
         }
-        RES.getResByUrl(item.img.url, resComplate, this, RES.ResourceItem.TYPE_IMAGE);
+        BS.loadImg(item.img.url, resComplate, this);
     }
 
     // 颜色转换
@@ -295,7 +317,7 @@ class Page extends egret.DisplayObjectContainer {
     // 选项
     private choice(data) {
         data.datas.forEach((item) => {
-            RES.getResByUrl(data.img.url, function(texture:egret.Texture):void {
+            BS.loadImg(data.img.url, function(texture:egret.Texture):void {
                 // 背景
                 var bgImg = new egret.Bitmap();
                 bgImg.texture = texture;
@@ -305,14 +327,15 @@ class Page extends egret.DisplayObjectContainer {
                 bgImg.height = item.height;
                 this.addChildAt(bgImg, 4);
                 bgImg.touchEnabled = true;
-                bgImg.addEventListener(egret.TouchEvent.TOUCH_TAP, function() {
+                bgImg.addEventListener(egret.TouchEvent.TOUCH_TAP, function(Event) {
                     console.log('choice');
                     this.isChoice = true;
                     this.choiceData = item.datas;
                     this.choiceI = 0;
                     this.choiceLen = item.datas.length;
                     this.setPage(this.choiceData, this.choiceI);
-                    this.stage.addEventListener(egret.TouchEvent.TOUCH_TAP, this.onTouchTap, this, true);
+                    Event.stopImmediatePropagation();
+                    this.stage.addEventListener(egret.TouchEvent.TOUCH_TAP, this.onTouchTap, this);
                 }, this);
                 // 文本
                 let text = new egret.TextField();
@@ -328,7 +351,7 @@ class Page extends egret.DisplayObjectContainer {
                 text.height = item.height - (item.text.offsetY*2);
                 text.text = item.text.content;
                 this.addChildAt(text, 5);
-            }, this, RES.ResourceItem.TYPE_IMAGE);
+            }, this);
 
         });
     }
