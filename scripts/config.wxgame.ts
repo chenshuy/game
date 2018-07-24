@@ -19,7 +19,7 @@ const config: ResourceManagerConfig = {
                 commands: [
                     new CleanPlugin({ matchers: ["js", "resource"] }),
                     new CompilePlugin({ libraryType: "debug", defines: { DEBUG: true, RELEASE: false } }),
-                    new ExmlPlugin('commonjs'), // 非 EUI 项目关闭此设置
+                    // new ExmlPlugin('commonjs'), // 非 EUI 项目关闭此设置
                     new WxgamePlugin(),
                     new ManifestPlugin({ output: 'manifest.js' })
                 ]

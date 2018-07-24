@@ -18,8 +18,9 @@ class Page extends egret.DisplayObjectContainer {
     private isChoice = false; // 是否选项场景
 
     private texts = []; // 文本组
-
-    public skipIn = false;
+    private sounds = []; // 存储音效
+    public skipIn = false; // 判断是否从目录或存档跳转而来
+    private music;
 
     private onAddToStage() {
         this.stage.frameRate = 60;
@@ -41,7 +42,7 @@ class Page extends egret.DisplayObjectContainer {
     private menu() {
         BS.menuModule.visible = false;
         this.stage.addChildAt(BS.menuModule, 9);
-        BS.loadImg('static/common/img/menu.png', function(texture:egret.Texture) {
+        BS.loadImg('static/common/img/menu.png', (texture:egret.Texture) => {
             BS.btnMenu = new egret.Bitmap();
             BS.btnMenu.texture = texture;
             BS.btnMenu.width = 50;
@@ -50,7 +51,7 @@ class Page extends egret.DisplayObjectContainer {
             BS.btnMenu.y = 20;
             this.stage.addChild(BS.btnMenu);
             BS.btnMenu.touchEnabled = true;
-            BS.btnMenu.addEventListener(egret.TouchEvent.TOUCH_TAP, function(Event) {
+            BS.btnMenu.addEventListener(egret.TouchEvent.TOUCH_TAP, (Event) => {
                 BS.menuModule.visible = true;
                 BS.btnMenu.visible = false;
                 Event.stopImmediatePropagation()
@@ -73,6 +74,7 @@ class Page extends egret.DisplayObjectContainer {
                 }
             }
         }
+        console.log()
         // 判断是否选项场景
         if(this.isChoice) {
             this.choiceI++;
@@ -81,6 +83,7 @@ class Page extends egret.DisplayObjectContainer {
             } else {
                 this.isChoice = false;
                 this.choiceI = undefined;
+                this.choiceData = null;
                 this.pageI++;
                 this.setPage(this.pageData, this.pageI);
             }
@@ -97,24 +100,27 @@ class Page extends egret.DisplayObjectContainer {
     }
 
     // 渲染模块
-    private setPage(page, i) {
+    private async setPage(page, i) {
         this.clearChild();
-        this.texts = [];
         let pi = page[i];
         // 背景
-        if(pi.img) {
-            this.creatBg(pi.img);
-        }
+        await this.creatBg(pi.img);
         // 图片
         if(pi.picture && pi.picture.length) {
-            pi.picture.forEach(data => {
-                this.creatImg(data);
-            });
+            for (const key in pi.picture) {
+                await this.creatImg(pi.picture[key]);
+            }
         }
         // 文本
         if(pi.texts && pi.texts.length) {
-            pi.texts.forEach(data => {
-                this.creatText(data);
+            for (const key in pi.texts) {
+                await this.creatText(pi.texts[key]);
+            }
+        }
+        // 音频
+        if(pi.sound && pi.sound.length) {
+            pi.sound.forEach(data => {
+                this.creatSound(data);
             });
         }
         // 选项
@@ -122,75 +128,87 @@ class Page extends egret.DisplayObjectContainer {
             this.stage.removeEventListener(egret.TouchEvent.TOUCH_TAP, this.onTouchTap, this);
             this.choice(pi.choice);
         }
-    }
-
-    // 清除模块
-    private clearChild() {
-        this.$children.forEach(data => {
-            this.removeChild(data);
-        });
-        this.$children = [];
+        this.loadNext();
     }
 
     // 加载背景
     private creatBg(item) {
-        BS.loadImg(item.url, function(texture:egret.Texture) {
-            var bgImg: egret.Bitmap = new egret.Bitmap();
-            bgImg.texture = texture;
-            var imgWidth = texture.textureWidth;
-            var imgHeight = texture.textureHeight;
-            var maxWidth = this.stage.stageWidth;
-            var maxHeight = this.stage.stageHeight;
-            if (maxWidth / maxHeight <= imgWidth / imgHeight) {
-                bgImg.width = maxWidth;
-                bgImg.height = maxWidth * (imgHeight / imgWidth);
-            } else {
-                bgImg.width = maxHeight * (imgWidth / imgHeight);
-                bgImg.height = maxHeight;
-            }
-            bgImg.x = this.stage.stageWidth/2;
-            bgImg.y = this.stage.stageHeight/2;
-            bgImg.anchorOffsetX = bgImg.width/2;
-            bgImg.anchorOffsetY = bgImg.height/2;
-            this.addChildAt(bgImg, 0);
-            item.effect && this.tweenBg(item.duration, item.delay, item.effect, bgImg);
-        }, this);
+        if(item) {
+            return new Promise((resolve) => {
+                BS.loadImg(item.url, (texture:egret.Texture) => {
+                    var bgImg: egret.Bitmap = new egret.Bitmap();
+                    bgImg.texture = texture;
+                    var imgWidth = texture.textureWidth;
+                    var imgHeight = texture.textureHeight;
+                    var maxWidth = this.stage.stageWidth;
+                    var maxHeight = this.stage.stageHeight;
+                    if (maxWidth / maxHeight <= imgWidth / imgHeight) {
+                        bgImg.width = maxWidth;
+                        bgImg.height = maxWidth * (imgHeight / imgWidth);
+                    } else {
+                        bgImg.width = maxHeight * (imgWidth / imgHeight);
+                        bgImg.height = maxHeight;
+                    }
+                    bgImg.x = this.stage.stageWidth/2;
+                    bgImg.y = this.stage.stageHeight/2;
+                    bgImg.anchorOffsetX = bgImg.width/2;
+                    bgImg.anchorOffsetY = bgImg.height/2;
+                    this.addChildAt(bgImg, 0);
+                    item.effect && this.tweenBg(item.duration, item.delay, item.effect, bgImg);
+                    resolve();
+                }, this);
+            })
+        }
     }
 
     // 加载图片
     private creatImg(item) {
-        BS.loadImg(item.img.url, function(texture:egret.Texture):void {
-            var result:egret.Bitmap = new egret.Bitmap();
-            result.texture = texture;
-            result.x = item.x;
-            result.y = item.y;
-            result.width = item.width;
-            result.height = item.height;
-            result.touchEnabled = true;
-            result.addEventListener(egret.TouchEvent.TOUCH_END, function() {
-                // const pageView = new Page();
-                // this.stage.addChild(pageView);
-                // this.stage.removeChild(this);
-            }, this);
-            this.addChildAt(result, 1);
-            if(item.effect && item.effect.duration !== 0) {
-                this.tweenBg(item.duration, item.delay, item.effect, result)
-            }
-        }, this);
+        if(item) {
+            return new Promise((resolve) => {
+                BS.loadImg(item.img.url, (texture:egret.Texture) => {
+                    var result:egret.Bitmap = new egret.Bitmap();
+                    result.texture = texture;
+                    result.x = item.x;
+                    result.y = item.y;
+                    result.width = item.width;
+                    result.height = item.height;
+                    if(item.type) {
+                        result.touchEnabled = true;
+                        result.addEventListener(egret.TouchEvent.TOUCH_END, () => {
+                            BS.pageView.skip({page: 0});
+                        }, this);
+                    }
+                    this.addChildAt(result, 1);
+                    if(item.effect && item.effect.duration !== 0) {
+                        this.tweenBg(item.duration, item.delay, item.effect, result)
+                    }
+                    resolve();
+                }, this);
+            })
+        }
     }
 
     // 文本
     private creatText(item) {
         let content = item.text.content;
-        // 文本背景
-        let resComplate = (texture) => {
-            var result:egret.Bitmap = new egret.Bitmap();
-            result.texture = texture;
-            result.x = item.x;
-            result.y = item.y;
-            result.width = item.width;
-            result.height = item.height;
-
+        let promise = new Promise((resolve) => {
+            // 文本背景
+            if(item.img) {
+                BS.loadImg(item.img.url, (texture) => {
+                    var result:egret.Bitmap = new egret.Bitmap();
+                    result.texture = texture;
+                    result.x = item.x;
+                    result.y = item.y;
+                    result.width = item.width;
+                    result.height = item.height;
+                    this.addChildAt(result, 3);
+                    resolve();
+                }, this);
+            } else {
+                resolve();
+            }
+        });
+        promise.then(() => {
             // 文本内容
             let text = new egret.TextField();
             text.fontFamily = item.style.font;
@@ -210,6 +228,7 @@ class Page extends egret.DisplayObjectContainer {
                 timer.addEventListener(egret.TimerEvent.TIMER, timeFunc, this);
                 timer.start();
                 text.timer = timer;
+                this.texts.push(text);
             } else {
                 text.text = content;
             }
@@ -221,11 +240,59 @@ class Page extends egret.DisplayObjectContainer {
                     i++;
                 }
             }
-            this.addChildAt(result, 2);
-            this.addChildAt(text, 3);
-            this.texts.push(text);
+            this.addChildAt(text, 4);
+        })
+    }
+
+    // 音频
+    private creatSound(item) {
+        var loop = item.loop ? 0 : 1;
+        let delay = item.delay * 1000;
+        var sound: egret.Sound = new egret.Sound();
+        sound.addEventListener(egret.Event.COMPLETE, function loadOver(event: egret.Event) {
+            setTimeout(() => {
+                var channel:egret.SoundChannel = sound.play(0,loop);
+                channel.volume = item.volume;
+                if(item.type === 'sound') {
+                    this.sounds.push(channel);
+                } else {
+                    this.music && this.music.stop();
+                    this.music = channel;
+                }
+            }, delay);
+        }, this);
+        sound.addEventListener(egret.IOErrorEvent.IO_ERROR, function loadError(event: egret.IOErrorEvent) {
+            console.log("loaded error!");
+        }, this);
+        sound.load(item.url + '?d=1');
+    }
+
+    // 预加载
+    private loadNext() {
+        var imgLoader:egret.ImageLoader = new egret.ImageLoader;
+        let nextPage;
+        if(this.choiceData) {
+            nextPage = this.choiceData[this.choiceI + 1];
+        } else {
+            nextPage = this.pageData[this.pageI + 1];
         }
-        BS.loadImg(item.img.url, resComplate, this);
+        if(nextPage) {
+            imgLoader.load(nextPage.img.url + BS.size);
+            if(nextPage.picture && nextPage.picture.length) {
+                for (const key in nextPage.picture) {
+                    imgLoader.load(nextPage.picture[key].img.url + BS.size);
+                }
+            }
+        }
+    }
+
+    // 清除模块
+    private clearChild() {
+        this.texts = [];
+        this.$children = [];
+        this.sounds.forEach((data) => {
+            data.stop();
+        });
     }
 
     // 颜色转换
@@ -317,7 +384,7 @@ class Page extends egret.DisplayObjectContainer {
     // 选项
     private choice(data) {
         data.datas.forEach((item) => {
-            BS.loadImg(data.img.url, function(texture:egret.Texture):void {
+            BS.loadImg(data.img.url, (texture:egret.Texture) => {
                 // 背景
                 var bgImg = new egret.Bitmap();
                 bgImg.texture = texture;
@@ -327,8 +394,7 @@ class Page extends egret.DisplayObjectContainer {
                 bgImg.height = item.height;
                 this.addChildAt(bgImg, 4);
                 bgImg.touchEnabled = true;
-                bgImg.addEventListener(egret.TouchEvent.TOUCH_TAP, function(Event) {
-                    console.log('choice');
+                bgImg.addEventListener(egret.TouchEvent.TOUCH_TAP, (Event) => {
                     this.isChoice = true;
                     this.choiceData = item.datas;
                     this.choiceI = 0;
@@ -354,13 +420,5 @@ class Page extends egret.DisplayObjectContainer {
             }, this);
 
         });
-    }
-
-    // 创建Bitmap对象
-    private createBitmapByName(name: string) {
-        let result = new egret.Bitmap();
-        let texture: egret.Texture = RES.getRes(name);
-        result.texture = texture;
-        return result;
     }
 }

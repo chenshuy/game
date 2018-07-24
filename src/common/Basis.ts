@@ -12,6 +12,8 @@ class BS {
 
     static isRead = true; // 是否读档
 
+    static size = "?x-oss-process=image/resize,w_1080"; // oss尺寸
+
     static btnMenu: egret.Bitmap; // 菜单按钮
 
     // 加载图片
@@ -22,7 +24,7 @@ class BS {
                 texture._setBitmapData(evt.currentTarget.data);
             callback.call(that, texture);
         }, that);
-        imgLoader.load(url);
+        imgLoader.load(url + this.size);
     }
 
     // 创建背景图片
@@ -30,6 +32,8 @@ class BS {
         this.loadImg(item.url, function(texture:egret.Texture):void {
             var result:egret.Bitmap = new egret.Bitmap();
             result.texture = texture;
+            result.width = this.stage.stageWidth;
+            result.height = this.stage.stageHeight;
             this.addChildAt(result, 0);
         }, that);
     }
@@ -53,6 +57,7 @@ class BS {
         }, that);
     }
 
+    // 获取地址栏游戏id
     static getID() {
         var href = location.href;
         var indexw = href.indexOf('?') === -1 ? href.length : href.indexOf('?');

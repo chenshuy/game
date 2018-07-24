@@ -86,9 +86,6 @@ class Records extends egret.Sprite {
         }
         localStorage.setItem(BS.getID(), JSON.stringify(data));
         this.vdata();
-        BS.menuModule.visible = false;
-        BS.btnMenu.visible = true;
-        this.stage.removeChild(BS.recordsModule);
     }
 
     // 读取
