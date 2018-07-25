@@ -1,3 +1,7 @@
+/**
+ * 公用变量、函数
+ * @class BS
+ */
 class BS {
 
     constructor() {}
@@ -29,7 +33,7 @@ class BS {
 
     // 创建背景图片
     static creatBg(item, that) {
-        this.loadImg(item.url, function(texture:egret.Texture):void {
+        this.loadImg(item.url, function(texture:egret.Texture) {
             var result:egret.Bitmap = new egret.Bitmap();
             result.texture = texture;
             result.width = this.stage.stageWidth;
@@ -40,7 +44,7 @@ class BS {
 
     // 创建图片
     static creatImg(item, that, callback?) {
-        this.loadImg(item.img.url, function(texture:egret.Texture):void {
+        this.loadImg(item.img.url, function(texture:egret.Texture) {
             var result:egret.Bitmap = new egret.Bitmap();
             result.texture = texture;
             result.x = item.x;
@@ -58,11 +62,40 @@ class BS {
     }
 
     // 获取地址栏游戏id
+
     static getID() {
         var href = location.href;
         var indexw = href.indexOf('?') === -1 ? href.length : href.indexOf('?');
         var str = 'save' + href.substring(href.lastIndexOf('/') + 1, indexw);
-        return 'saveh5103';
+        return str;
     }
+
+    // 色值转换
+    static setColor(data) {
+        var num = data.split('#')[1];
+        var color = num.length === 3 ? (num + num) : num;
+        return '0x' + color;
+    }
+
+
+    // 获取时间
+    static getTime() {
+        var now = new Date();
+        var year = now.getFullYear(); // 年
+        var month = now.getMonth() + 1; // 月
+        var day = now.getDate(); // 日
+        var hh = now.getHours(); // 时
+        var mm = now.getMinutes(); // 分
+        let check = (str) => {
+            str = str.toString();
+            if (str.length < 2) {
+                str = '0' + str;
+            }
+            return str;
+        }
+        return year + '/' + check(month) + '/' + check(day) + ' ' + check(hh) + ':' + check(mm);
+    }
+
+
 
 }

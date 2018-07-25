@@ -1,5 +1,8 @@
-// 存档，读档
-
+/**
+ *  存档，读档
+ * @class Records
+ * @extends {egret.Sprite}
+ */
 class Records extends egret.Sprite {
 
     public constructor() {
@@ -9,10 +12,8 @@ class Records extends egret.Sprite {
     }
 
     private record;
-
     private texts = [];
-
-    private localData;
+    private localData; // 本地数据
 
     private init() {
         this.touchEnabled = true;
@@ -75,7 +76,7 @@ class Records extends egret.Sprite {
 
     // 执行保存
     private save(item) {
-        var time = this.getTime();
+        var time = BS.getTime();
         let index = {
             page: BS.pageView.pageI
         }
@@ -102,22 +103,5 @@ class Records extends egret.Sprite {
             BS.pageView.skip(this.localData[item.biaoshi].index);
             this.stage.removeChild(this);
         }
-    }
-
-    private getTime() {
-        var now = new Date();
-        var year = now.getFullYear(); // 年
-        var month = now.getMonth() + 1; // 月
-        var day = now.getDate(); // 日
-        var hh = now.getHours(); // 时
-        var mm = now.getMinutes(); // 分
-        function check(str) {
-            str = str.toString();
-            if (str.length < 2) {
-                str = '0' + str;
-            }
-            return str;
-        }
-        return year + '/' + check(month) + '/' + check(day) + ' ' + check(hh) + ':' + check(mm);
     }
 }

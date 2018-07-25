@@ -1,5 +1,8 @@
-// 菜单
-
+/**
+ *  菜单
+ * @class Menu
+ * @extends {egret.Sprite}
+ */
 class Menu extends egret.Sprite {
 
     public constructor() {

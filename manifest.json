@@ -13,7 +13,6 @@
 		"bin-debug/stage/Page.js",
 		"bin-debug/stage/Start.js",
 		"bin-debug/Main.js",
-		"bin-debug/common/Basis.js",
-		"bin-debug/stage/Loading.js"
+		"bin-debug/common/Basis.js"
 	]
 }

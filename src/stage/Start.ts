@@ -1,5 +1,8 @@
-// 开始页面
-
+/**
+ * 开始场景
+ * @class Start
+ * @extends {egret.DisplayObjectContainer}
+ */
 class Start extends egret.DisplayObjectContainer {
 
     public constructor() {
@@ -9,9 +12,7 @@ class Start extends egret.DisplayObjectContainer {
 
     private onAddToStage() {
         var start = BS.data.start;
-
         BS.creatBg(start.img, this); // 创建背景图片
-
         // 创建图片组
         start.picture.forEach(data => {
             BS.creatImg(data, this);

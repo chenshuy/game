@@ -1,5 +1,8 @@
-// 目录
-
+/**
+ * 目录
+ * @class Catalog
+ * @extends {egret.Sprite}
+ */
 class Catalog extends egret.Sprite {
 
     public constructor() {
@@ -22,13 +25,19 @@ class Catalog extends egret.Sprite {
         this.setText();
     }
 
+    // 设置滚动区
     private setText() {
         var content = new egret.DisplayObjectContainer();
         this.createConten(content);
         var myscrollView:egret.ScrollView = new egret.ScrollView();
         myscrollView.setContent(content);
-        myscrollView.width = 880;
-        myscrollView.height = 400;
+        if(BS.data.resolution === 1) {
+            myscrollView.width = 500;
+            myscrollView.height = 700;
+        } else {
+            myscrollView.width = 880;
+            myscrollView.height = 400;
+        }
         myscrollView.x = this.stage.stageWidth / 2;
         myscrollView.y = this.stage.stageHeight / 2;
         myscrollView.anchorOffsetX = myscrollView.width / 2;
@@ -36,21 +45,30 @@ class Catalog extends egret.Sprite {
         this.addChild(myscrollView);
     }
 
+    // 创建目录文本
     private createConten(content) {
         const arr = [];
         arr.length = BS.data.page.length;
         var j = 0;
         for (let i = 0; i < arr.length; i++) {
             let text = new egret.TextField();
-            text.width = 88;
-            text.height = 30;
             text.textAlign = 'center';
             text.verticalAlign = 'middle';
             text.size = 24;
             text.text = String(i+1);
-            text.x = (i % 10) * 88;
-            text.y = j*40;
-            i%10 === 9 && j++;
+            if(BS.data.resolution === 1) {
+                text.width = 100;
+                text.height = 70;
+                text.x = (i % 5) * 100;
+                text.y = j*70;
+                i%5 === 4 && j++;
+            } else {
+                text.width = 88;
+                text.height = 40;
+                text.x = (i % 10) * 88;
+                text.y = j*40;
+                i%10 === 9 && j++;
+            }
             text.touchEnabled = true;
             text.addEventListener(egret.TouchEvent.TOUCH_TAP, () => {
                 if(!BS.pageView.$hasAddToStage) {

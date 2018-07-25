@@ -1,5 +1,8 @@
-// 主页面
-
+/**
+ * 轮播场景页面
+ * @class Page
+ * @extends {egret.DisplayObjectContainer}
+ */
 class Page extends egret.DisplayObjectContainer {
 
     public constructor() {
@@ -20,11 +23,18 @@ class Page extends egret.DisplayObjectContainer {
     private texts = []; // 文本组
     private sounds = []; // 存储音效
     public skipIn = false; // 判断是否从目录或存档跳转而来
-    private music;
+    private music; // 音乐
+
+    private values = []; // 存储数值
 
     private onAddToStage() {
-        this.stage.frameRate = 60;
         this.pageData = BS.data.page;
+        if(BS.data.value && BS.data.value.length) {
+            BS.data.value.forEach(data => {
+                this.values.push(data);
+            });
+        }
+        this.values = BS.data.value;
         this.pageLen = this.pageData.length;
         this.menu();
         this.stage.addEventListener(egret.TouchEvent.TOUCH_TAP, this.onTouchTap, this);
@@ -111,6 +121,8 @@ class Page extends egret.DisplayObjectContainer {
                 await this.creatImg(pi.picture[key]);
             }
         }
+        // 数值
+        pi.value && this.valueSet(pi.value);
         // 文本
         if(pi.texts && pi.texts.length) {
             for (const key in pi.texts) {
@@ -131,7 +143,7 @@ class Page extends egret.DisplayObjectContainer {
         this.loadNext();
     }
 
-    // 加载背景
+    // 创建背景
     private creatBg(item) {
         if(item) {
             return new Promise((resolve) => {
@@ -161,7 +173,7 @@ class Page extends egret.DisplayObjectContainer {
         }
     }
 
-    // 加载图片
+    // 创建图片
     private creatImg(item) {
         if(item) {
             return new Promise((resolve) => {
@@ -188,9 +200,10 @@ class Page extends egret.DisplayObjectContainer {
         }
     }
 
-    // 文本
+    // 创建文本
     private creatText(item) {
-        let content = item.text.content;
+        let content = this.valueFilter(item.text.content);
+
         let promise = new Promise((resolve) => {
             // 文本背景
             if(item.img) {
@@ -212,7 +225,7 @@ class Page extends egret.DisplayObjectContainer {
             // 文本内容
             let text = new egret.TextField();
             text.fontFamily = item.style.font;
-            text.textColor = this.setColor(item.style.color);
+            text.textColor = BS.setColor(item.style.color);
             text.lineSpacing = item.style.lineSpacing * 2;
             text.textAlign = item.style.alignH;
             text.verticalAlign = item.style.alignV;
@@ -244,7 +257,7 @@ class Page extends egret.DisplayObjectContainer {
         })
     }
 
-    // 音频
+    // 创建音频
     private creatSound(item) {
         var loop = item.loop ? 0 : 1;
         let delay = item.delay * 1000;
@@ -265,6 +278,89 @@ class Page extends egret.DisplayObjectContainer {
             console.log("loaded error!");
         }, this);
         sound.load(item.url + '?d=1');
+    }
+
+    // 数值计算
+    private valueSet(item) {
+        this.values.forEach(function (that) {
+            if (item.name === that.id) {
+                switch (item.type) {
+                    case ('equals'):
+                        that.num = item.num;
+                        break;
+                    case ('add'):
+                        that.num += item.num;
+                        break;
+                    case ('reduce'):
+                        that.num -= item.num;
+                        break;
+                    case ('multiply'):
+                        that.num *= item.num;
+                        break;
+                    case ('divide'):
+                        that.num = item.num === 0 ? 0 : (that.num / item.num);
+                        break;
+                }
+            }
+        });
+    }
+
+    // 选项
+    private choice(data) {
+        data.datas.forEach((item) => {
+            BS.loadImg(data.img.url, (texture:egret.Texture) => {
+                // 背景
+                var bgImg = new egret.Bitmap();
+                bgImg.texture = texture;
+                bgImg.x = item.x;
+                bgImg.y = item.y;
+                bgImg.width = item.width;
+                bgImg.height = item.height;
+                this.addChildAt(bgImg, 4);
+                bgImg.touchEnabled = true;
+                bgImg.addEventListener(egret.TouchEvent.TOUCH_TAP, (Event) => {
+                    this.isChoice = true;
+                    this.choiceData = item.datas;
+                    this.choiceI = 0;
+                    this.choiceLen = item.datas.length;
+                    this.setPage(this.choiceData, this.choiceI);
+                    Event.stopImmediatePropagation();
+                    this.stage.addEventListener(egret.TouchEvent.TOUCH_TAP, this.onTouchTap, this);
+                }, this);
+                // 文本
+                let text = new egret.TextField();
+                text.fontFamily = data.style.font;
+                text.textColor = BS.setColor(data.style.color);
+                text.lineSpacing = data.style.lineSpacing * 2;
+                text.textAlign = data.style.alignH;
+                text.verticalAlign = data.style.alignV;
+                text.size = data.style.fontSize;
+                text.x = item.x + item.text.offsetX;
+                text.y = item.y + item.text.offsetY;
+                text.width = item.width - (item.text.offsetX*2);
+                text.height = item.height - (item.text.offsetY*2);
+                text.text = item.text.content;
+                this.addChildAt(text, 5);
+            }, this);
+
+        });
+    }
+
+    // 数值字符转换
+    private valueFilter(str) {
+        var arr = str.split('\\sz');
+        for (var i = 0; i < arr.length; i++) {
+            if (i > 0) {
+                var num = parseInt(arr[i].substring(1, 2));
+                num--;
+                if (this.values[num]) {
+                    arr[i] = arr[i].replace(/\[(\d)\]/, this.values[num].num);
+                } else {
+                    arr[i] = arr[i].replace(/\[(\d)\]/, '');
+                }
+            }
+        }
+        return arr.join('');
     }
 
     // 预加载
@@ -289,17 +385,10 @@ class Page extends egret.DisplayObjectContainer {
     // 清除模块
     private clearChild() {
         this.texts = [];
-        this.$children = [];
+        this.removeChildren();
         this.sounds.forEach((data) => {
             data.stop();
         });
-    }
-
-    // 颜色转换
-    private setColor(data) {
-        var num = data.split('#')[1];
-        var color = num.length === 3 ? (num + num) : num;
-        return '0x' + color;
     }
 
     // 动画
@@ -379,46 +468,5 @@ class Page extends egret.DisplayObjectContainer {
                     }, this);
             }, delay2)
         }
-    }
-
-    // 选项
-    private choice(data) {
-        data.datas.forEach((item) => {
-            BS.loadImg(data.img.url, (texture:egret.Texture) => {
-                // 背景
-                var bgImg = new egret.Bitmap();
-                bgImg.texture = texture;
-                bgImg.x = item.x;
-                bgImg.y = item.y;
-                bgImg.width = item.width;
-                bgImg.height = item.height;
-                this.addChildAt(bgImg, 4);
-                bgImg.touchEnabled = true;
-                bgImg.addEventListener(egret.TouchEvent.TOUCH_TAP, (Event) => {
-                    this.isChoice = true;
-                    this.choiceData = item.datas;
-                    this.choiceI = 0;
-                    this.choiceLen = item.datas.length;
-                    this.setPage(this.choiceData, this.choiceI);
-                    Event.stopImmediatePropagation();
-                    this.stage.addEventListener(egret.TouchEvent.TOUCH_TAP, this.onTouchTap, this);
-                }, this);
-                // 文本
-                let text = new egret.TextField();
-                text.fontFamily = data.style.font;
-                text.textColor = this.setColor(data.style.color);
-                text.lineSpacing = data.style.lineSpacing * 2;
-                text.textAlign = data.style.alignH;
-                text.verticalAlign = data.style.alignV;
-                text.size = data.style.fontSize;
-                text.x = item.x + item.text.offsetX;
-                text.y = item.y + item.text.offsetY;
-                text.width = item.width - (item.text.offsetX*2);
-                text.height = item.height - (item.text.offsetY*2);
-                text.text = item.text.content;
-                this.addChildAt(text, 5);
-            }, this);
-
-        });
     }
 }

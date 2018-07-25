@@ -35,21 +35,24 @@ class Main extends egret.DisplayObjectContainer {
     }
 
     private onAddToStage(event: egret.Event) {
-
-        egret.lifecycle.addLifecycleListener((context) => {
-            // custom lifecycle plugin
-            context.onUpdate = () => {
-
-            }
-        })
-
-        egret.lifecycle.onPause = () => {
-            // egret.ticker.pause();
+        console.log(BS.data);
+        // 设置分辨率
+        if(BS.data.resolution === 1) {
+            this.stage.setContentSize(640, 1080)
         }
 
-        egret.lifecycle.onResume = () => {
-            // egret.ticker.resume();
-        }
+        // egret.lifecycle.addLifecycleListener((context) => {
+        //     // custom lifecycle plugin
+        //     context.onUpdate = () => {
+
+        //     }
+        // })
+        // egret.lifecycle.onPause = () => {
+        //     // egret.ticker.pause();
+        // }
+        // egret.lifecycle.onResume = () => {
+        //     // egret.ticker.resume();
+        // }
 
         this.runGame().catch(e => {
             console.log(e);
@@ -57,31 +60,7 @@ class Main extends egret.DisplayObjectContainer {
     }
 
     private async runGame() {
-        // this.load();
         this.stage.addChild(BS.startView);
-    }
-
-    private load() {
-        var list = [
-            'https://dc-platform.dianchu.com/dc_plat/h5/base/back-groud/indoor/n913ndpvmb.jpg',
-            'https://dc-platform.dianchu.com/dc_plat/h5/base/back-groud/indoor/81hi9o3mll.jpg',
-            'https://dc-platform.dianchu.com/dc_plat/h5/base/back-groud/indoor/qurx8tlr1z.png',
-            'https://dc-platform.dianchu.com/dc_plat/h5/base/back-groud/indoor/14yo7raz9t.jpg'
-        ]
-        var imgLoader:egret.ImageLoader = new egret.ImageLoader;
-        list.forEach((data) => {
-            imgLoader.load(data);
-        })
-        console.log(imgLoader.data);
-        // imgLoader.once( egret.Event.COMPLETE, (evt:egret.Event) => {
-        //     console.log(evt);
-        //     console.log(imgLoader.data);
-        //     let texture = new egret.Texture();
-        //         texture._setBitmapData(evt.currentTarget.data);
-        //     console.log(texture);
-        //     // console.log(imgLoader.data)
-        // }, this);
-
     }
 
 }
