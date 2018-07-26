@@ -35,12 +35,11 @@ class Main extends egret.DisplayObjectContainer {
     }
 
     private onAddToStage(event: egret.Event) {
-        console.log(BS.data);
-        // 设置分辨率
-        if(BS.data.resolution === 1) {
-            this.stage.setContentSize(640, 1080)
+        // 设置竖屏分辨率
+        if (BS.data.resolution === 1) {
+            this.stage.setContentSize(640, 1080);
         }
-
+        document.title = BS.data.title;
         // egret.lifecycle.addLifecycleListener((context) => {
         //     // custom lifecycle plugin
         //     context.onUpdate = () => {

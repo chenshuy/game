@@ -10,26 +10,29 @@ class Page extends egret.DisplayObjectContainer {
         this.addEventListener(egret.Event.ADDED_TO_STAGE, this.onAddToStage, this);
     }
 
-    public pageData; // page数据
-    public pageI = 0;// 当前场景下标
-    private pageLen; // 场景长度
+    public pageData: Array<any>; // page数据
+    public pageI: number = 0;// 当前场景下标
+    private pageLen: number; // 场景长度
 
-    private choiceData; // 选项场景
-    private choiceI = undefined;// 选项场景下标
-    private choiceLen; // 选项场景长度
+    private choiceData: Array<any>; // 选项场景
+    private choiceI: number = undefined;// 选项场景下标
+    private choiceLen: number; // 选项场景长度
 
-    private isChoice = false; // 是否选项场景
+    private isChoice: boolean = false; // 是否选项场景
+    public skipIn: boolean = false; // 判断是否从目录或存档跳转而来
 
-    private texts = []; // 文本组
-    private sounds = []; // 存储音效
-    public skipIn = false; // 判断是否从目录或存档跳转而来
+    private texts: Array<any> = []; // 文本组
+    private values: Array<any> = []; // 存储数值
+    private sounds: Array<any> = []; // 存储音效
+    private tweens: number = 0; // 存储动画
+
     private music; // 音乐
 
-    private values = []; // 存储数值
+    private loadComplate: number = 0;
 
     private onAddToStage() {
         this.pageData = BS.data.page;
-        if(BS.data.value && BS.data.value.length) {
+        if (BS.data.value && BS.data.value.length) {
             BS.data.value.forEach(data => {
                 this.values.push(data);
             });
@@ -52,7 +55,7 @@ class Page extends egret.DisplayObjectContainer {
     private menu() {
         BS.menuModule.visible = false;
         this.stage.addChildAt(BS.menuModule, 9);
-        BS.loadImg('static/common/img/menu.png', (texture:egret.Texture) => {
+        BS.loadImg('static/common/img/menu.png', (texture: egret.Texture) => {
             BS.btnMenu = new egret.Bitmap();
             BS.btnMenu.texture = texture;
             BS.btnMenu.width = 50;
@@ -71,11 +74,19 @@ class Page extends egret.DisplayObjectContainer {
 
     // 切换事件
     private onTouchTap() {
+        if(this.loadComplate !== 0) {
+            return false;
+        }
+        // 判断动画是否完成
+        if(this.tweens !== 0) {
+            return false;
+        }
         // 判断文本是否读取完毕
-        if(this.texts.length){
-            for(var i = 0,len = this.texts.length;i<len;i++) {
-                var item = this.texts[i];
-                if(item.timer && item.timer.running) {
+        if (this.texts.length) {
+            let textsLen = this.texts.length;
+            for (let i = 0; i < textsLen; i++) {
+                const item = this.texts[i];
+                if (item.timer && item.timer.running) {
                     this.texts.forEach((data) => {
                         data.timer.stop();
                         data.text = data.textContent;
@@ -84,11 +95,10 @@ class Page extends egret.DisplayObjectContainer {
                 }
             }
         }
-        console.log()
         // 判断是否选项场景
-        if(this.isChoice) {
+        if (this.isChoice) {
             this.choiceI++;
-            if(this.choiceI < this.choiceLen) {
+            if (this.choiceI < this.choiceLen) {
                 this.setPage(this.choiceData, this.choiceI);
             } else {
                 this.isChoice = false;
@@ -99,7 +109,7 @@ class Page extends egret.DisplayObjectContainer {
             }
         } else {
             this.pageI++;
-            if(this.pageI < this.pageLen) {
+            if (this.pageI < this.pageLen) {
                 this.setPage(this.pageData, this.pageI)
             } else {
                 this.pageI--;
@@ -110,50 +120,51 @@ class Page extends egret.DisplayObjectContainer {
     }
 
     // 渲染模块
-    private async setPage(page, i) {
+    private async setPage(page: any, i: number) {
         this.clearChild();
-        let pi = page[i];
+        let { img, picture, texts, sound, choice, value } = page[i];
         // 背景
-        await this.creatBg(pi.img);
+        await this.creatBg(img);
         // 图片
-        if(pi.picture && pi.picture.length) {
-            for (const key in pi.picture) {
-                await this.creatImg(pi.picture[key]);
+        if (picture && picture.length) {
+            for (const key in picture) {
+                await this.creatImg(picture[key]);
             }
         }
         // 数值
-        pi.value && this.valueSet(pi.value);
+        value && this.valueSet(value);
         // 文本
-        if(pi.texts && pi.texts.length) {
-            for (const key in pi.texts) {
-                await this.creatText(pi.texts[key]);
+        if (texts && texts.length) {
+            for (const key in texts) {
+                await this.creatText(texts[key]);
             }
         }
         // 音频
-        if(pi.sound && pi.sound.length) {
-            pi.sound.forEach(data => {
+        if (sound && sound.length) {
+            sound.forEach(data => {
                 this.creatSound(data);
             });
         }
         // 选项
-        if(pi.choice) {
+        if (choice) {
             this.stage.removeEventListener(egret.TouchEvent.TOUCH_TAP, this.onTouchTap, this);
-            this.choice(pi.choice);
+            this.choice(choice);
         }
         this.loadNext();
     }
 
     // 创建背景
     private creatBg(item) {
-        if(item) {
+        if (item) {
+            this.loadComplate++;
             return new Promise((resolve) => {
-                BS.loadImg(item.url, (texture:egret.Texture) => {
-                    var bgImg: egret.Bitmap = new egret.Bitmap();
+                BS.loadImg(item.url, (texture: egret.Texture) => {
+                    const bgImg: egret.Bitmap = new egret.Bitmap();
                     bgImg.texture = texture;
-                    var imgWidth = texture.textureWidth;
-                    var imgHeight = texture.textureHeight;
-                    var maxWidth = this.stage.stageWidth;
-                    var maxHeight = this.stage.stageHeight;
+                    const imgWidth = texture.textureWidth;
+                    const imgHeight = texture.textureHeight;
+                    const maxWidth = this.stage.stageWidth;
+                    const maxHeight = this.stage.stageHeight;
                     if (maxWidth / maxHeight <= imgWidth / imgHeight) {
                         bgImg.width = maxWidth;
                         bgImg.height = maxWidth * (imgHeight / imgWidth);
@@ -161,12 +172,13 @@ class Page extends egret.DisplayObjectContainer {
                         bgImg.width = maxHeight * (imgWidth / imgHeight);
                         bgImg.height = maxHeight;
                     }
-                    bgImg.x = this.stage.stageWidth/2;
-                    bgImg.y = this.stage.stageHeight/2;
-                    bgImg.anchorOffsetX = bgImg.width/2;
-                    bgImg.anchorOffsetY = bgImg.height/2;
+                    bgImg.x = this.stage.stageWidth / 2;
+                    bgImg.y = this.stage.stageHeight / 2;
+                    bgImg.anchorOffsetX = bgImg.width / 2;
+                    bgImg.anchorOffsetY = bgImg.height / 2;
                     this.addChildAt(bgImg, 0);
-                    item.effect && this.tweenBg(item.duration, item.delay, item.effect, bgImg);
+                    this.loadComplate--;
+                    item.effect && this.tweenImg(item.duration, item.delay, item.effect, bgImg);
                     resolve();
                 }, this);
             })
@@ -175,24 +187,26 @@ class Page extends egret.DisplayObjectContainer {
 
     // 创建图片
     private creatImg(item) {
-        if(item) {
+        if (item) {
+            this.loadComplate++;
             return new Promise((resolve) => {
-                BS.loadImg(item.img.url, (texture:egret.Texture) => {
-                    var result:egret.Bitmap = new egret.Bitmap();
+                BS.loadImg(item.img.url, (texture: egret.Texture) => {
+                    const result: egret.Bitmap = new egret.Bitmap();
                     result.texture = texture;
                     result.x = item.x;
                     result.y = item.y;
                     result.width = item.width;
                     result.height = item.height;
-                    if(item.type) {
+                    if (item.type) {
                         result.touchEnabled = true;
                         result.addEventListener(egret.TouchEvent.TOUCH_END, () => {
-                            BS.pageView.skip({page: 0});
+                            BS.pageView.skip({ page: 0 });
                         }, this);
                     }
                     this.addChildAt(result, 1);
-                    if(item.effect && item.effect.duration !== 0) {
-                        this.tweenBg(item.duration, item.delay, item.effect, result)
+                    this.loadComplate--;
+                    if (item.effect && item.effect.duration !== 0) {
+                        this.tweenImg(item.duration, item.delay, item.effect, result)
                     }
                     resolve();
                 }, this);
@@ -202,13 +216,13 @@ class Page extends egret.DisplayObjectContainer {
 
     // 创建文本
     private creatText(item) {
+        this.loadComplate++;
         let content = this.valueFilter(item.text.content);
-
         let promise = new Promise((resolve) => {
             // 文本背景
-            if(item.img) {
+            if (item.img) {
                 BS.loadImg(item.img.url, (texture) => {
-                    var result:egret.Bitmap = new egret.Bitmap();
+                    const result: egret.Bitmap = new egret.Bitmap();
                     result.texture = texture;
                     result.x = item.x;
                     result.y = item.y;
@@ -234,10 +248,10 @@ class Page extends egret.DisplayObjectContainer {
             text.y = item.y + item.text.offsetX;
             text.width = item.width - item.text.offsetX * 2;
             text.height = item.height - item.text.offsetY * 2;
-            if(item.read) {
+            if (item.read) {
                 text.textContent = content;
                 text.text = '';
-                var timer = new egret.Timer(item.speed, content.length);
+                const timer = new egret.Timer(item.speed, content.length);
                 timer.addEventListener(egret.TimerEvent.TIMER, timeFunc, this);
                 timer.start();
                 text.timer = timer;
@@ -254,19 +268,20 @@ class Page extends egret.DisplayObjectContainer {
                 }
             }
             this.addChildAt(text, 4);
+            this.loadComplate--;
         })
     }
 
     // 创建音频
     private creatSound(item) {
-        var loop = item.loop ? 0 : 1;
-        let delay = item.delay * 1000;
-        var sound: egret.Sound = new egret.Sound();
+        let loop = item.loop ? 0 : 1;
+        const delay = item.delay * 1000;
+        const sound: egret.Sound = new egret.Sound();
         sound.addEventListener(egret.Event.COMPLETE, function loadOver(event: egret.Event) {
             setTimeout(() => {
-                var channel:egret.SoundChannel = sound.play(0,loop);
+                const channel: egret.SoundChannel = sound.play(0, loop);
                 channel.volume = item.volume;
-                if(item.type === 'sound') {
+                if (item.type === 'sound') {
                     this.sounds.push(channel);
                 } else {
                     this.music && this.music.stop();
@@ -308,9 +323,10 @@ class Page extends egret.DisplayObjectContainer {
     // 选项
     private choice(data) {
         data.datas.forEach((item) => {
-            BS.loadImg(data.img.url, (texture:egret.Texture) => {
+            this.loadComplate++;
+            BS.loadImg(data.img.url, (texture: egret.Texture) => {
                 // 背景
-                var bgImg = new egret.Bitmap();
+                const bgImg = new egret.Bitmap();
                 bgImg.texture = texture;
                 bgImg.x = item.x;
                 bgImg.y = item.y;
@@ -337,10 +353,11 @@ class Page extends egret.DisplayObjectContainer {
                 text.size = data.style.fontSize;
                 text.x = item.x + item.text.offsetX;
                 text.y = item.y + item.text.offsetY;
-                text.width = item.width - (item.text.offsetX*2);
-                text.height = item.height - (item.text.offsetY*2);
+                text.width = item.width - (item.text.offsetX * 2);
+                text.height = item.height - (item.text.offsetY * 2);
                 text.text = item.text.content;
                 this.addChildAt(text, 5);
+                this.loadComplate--;
             }, this);
 
         });
@@ -348,10 +365,10 @@ class Page extends egret.DisplayObjectContainer {
 
     // 数值字符转换
     private valueFilter(str) {
-        var arr = str.split('\\sz');
-        for (var i = 0; i < arr.length; i++) {
+        let arr = str.split('\\sz');
+        for (let i = 0; i < arr.length; i++) {
             if (i > 0) {
-                var num = parseInt(arr[i].substring(1, 2));
+                let num = parseInt(arr[i].substring(1, 2));
                 num--;
                 if (this.values[num]) {
                     arr[i] = arr[i].replace(/\[(\d)\]/, this.values[num].num);
@@ -365,16 +382,16 @@ class Page extends egret.DisplayObjectContainer {
 
     // 预加载
     private loadNext() {
-        var imgLoader:egret.ImageLoader = new egret.ImageLoader;
+        const imgLoader: egret.ImageLoader = new egret.ImageLoader;
         let nextPage;
-        if(this.choiceData) {
+        if (this.choiceData) {
             nextPage = this.choiceData[this.choiceI + 1];
         } else {
             nextPage = this.pageData[this.pageI + 1];
         }
-        if(nextPage) {
+        if (nextPage) {
             imgLoader.load(nextPage.img.url + BS.size);
-            if(nextPage.picture && nextPage.picture.length) {
+            if (nextPage.picture && nextPage.picture.length) {
                 for (const key in nextPage.picture) {
                     imgLoader.load(nextPage.picture[key].img.url + BS.size);
                 }
@@ -392,38 +409,46 @@ class Page extends egret.DisplayObjectContainer {
     }
 
     // 动画
-    private tweenBg(duration, delay, effect, item) {
-        var locW = this.stage.stageWidth;
-        var locH = this.stage.stageHeight;
-        var ease = egret.Ease.sineInOut;
-        var duration2 = duration*1000;
-        var delay2 = delay*1000;
+    private tweenImg(duration, delay, effect, item) {
+        const locW = this.stage.stageWidth;
+        const locH = this.stage.stageHeight;
+        const ease = egret.Ease.sineInOut;
+        const duration2 = duration * 1000;
+        const delay2 = delay * 1000;
+        let delayFun = (data) => {
+            this.tweens++;
+            setTimeout(() => {
+                var tween = egret.Tween.get(item).to(data, duration2, ease).call(()=>{
+                    this.tweens--;
+                },this);
+            }, delay2)
+        }
         switch (effect) {
             case 'fadeIn':
                 item.alpha = 0;
-                delayFun.call(this, {alpha: 1});
+                delayFun({ alpha: 1 });
                 break;
             case 'slideInLeft':
                 item.x -= locW;
-                delayFun.call(this, {x: item.x + locW});
+                delayFun({ x: item.x + locW });
                 break;
             case 'slideInRight':
                 item.x += locW;
-                delayFun.call(this, {x: item.x - locW});
+                delayFun({ x: item.x - locW });
                 break;
             case 'slideInDown':
                 item.y += locH;
-                delayFun.call(this, {y: item.y - locH});
+                delayFun({ y: item.y - locH });
                 break;
             case 'slideInUp':
                 item.y -= locH;
-                delayFun.call(this, {y: item.y + locH});
+                delayFun({ y: item.y + locH });
                 break;
             case 'zoomOut':
                 item.alpha = 0;
                 item.scaleX = 1.5;
                 item.scaleY = 1.5;
-                delayFun.call({
+                delayFun({
                     alpha: 1,
                     scaleX: 1,
                     scaleY: 1
@@ -433,7 +458,7 @@ class Page extends egret.DisplayObjectContainer {
                 item.alpha = 0;
                 item.scaleX = 0.5;
                 item.scaleY = 0.5;
-                delayFun.call(this, {
+                delayFun({
                     alpha: 1,
                     scaleX: 1,
                     scaleY: 1
@@ -442,31 +467,34 @@ class Page extends egret.DisplayObjectContainer {
             case 'rollIn':
                 item.rotation = -100;
                 item.x -= locW;
-                delayFun.call(this, {
+                delayFun({
                     rotation: 0,
                     x: item.x + locW,
                 });
                 break;
             case 'shock':
-                // item.x += 20;
-                // egret.Tween.get( item, {loop: true} )
-                //     .to( {
-                //         x: locW/2 - 20,
-                //     }, duration2, egret.Ease.bounceInOut)
-                //     .call(()=> {
-                //         console.log('over')
-                //         item.x = locW/2;
-                //     }, this);
+                item.x += 20;
+                this.tweens++;
+                setTimeout(() => {
+                    egret.Tween.get(item).to({
+                        x: item.x - 40
+                    }, duration2 / 4, egret.Ease.bounceInOut).to({
+                        x: item.x
+                    }, duration2 / 4, egret.Ease.bounceInOut).to({
+                        x: item.x - 40
+                    }, duration2 / 4, egret.Ease.bounceInOut).to({
+                        x: item.x
+                    }, duration2 / 4, egret.Ease.bounceInOut).to({
+                        x: item.x - 40
+                    }, duration2 / 4, egret.Ease.bounceInOut).to({
+                        x: item.x
+                    }, duration2 / 4, egret.Ease.bounceInOut).to({
+                        x: item.x - 20
+                    }, duration2 / 4, egret.Ease.bounceInOut).call(()=>{
+                        this.tweens--;
+                    },this);
+                }, delay2);
                 break;
-        }
-
-        function delayFun(data) {
-            setTimeout (()=> {
-                egret.Tween.get( item )
-                    .to( data, duration2, ease)
-                    .call(()=>{
-                    }, this);
-            }, delay2)
         }
     }
 }

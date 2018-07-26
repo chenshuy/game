@@ -15,7 +15,7 @@ class Menu extends egret.Sprite {
         this.addEventListener(egret.TouchEvent.TOUCH_TAP, (Event) => {
             Event.stopImmediatePropagation();
         }, this);
-        var menu = BS.data.menu;
+        const menu = BS.data.menu;
         // 创建背景图片
         BS.creatBg(menu.img, this);
         // 创建图片组

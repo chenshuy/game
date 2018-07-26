@@ -11,12 +11,15 @@ class Start extends egret.DisplayObjectContainer {
     }
 
     private onAddToStage() {
-        var start = BS.data.start;
+        const start = BS.data.start;
         BS.creatBg(start.img, this); // 创建背景图片
         // 创建图片组
         start.picture.forEach(data => {
             BS.creatImg(data, this);
         });
+        setTimeout(() => {
+            this.loadCommon();
+        },0);
     }
 
     // 跳转
@@ -40,5 +43,18 @@ class Start extends egret.DisplayObjectContainer {
                 break;
             default:
         }
+    }
+
+    private loadCommon() {
+        const imgLoader: egret.ImageLoader = new egret.ImageLoader;
+        let {record, catalog} = BS.data;
+        let load = (data) => {
+            imgLoader.load(data.img.url + BS.size);
+            for (let key in data.picture) {
+                imgLoader.load(data.picture[key].img.url + BS.size);
+            }
+        }
+        load(record);
+        load(catalog);
     }
 }

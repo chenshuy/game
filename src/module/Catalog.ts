@@ -15,9 +15,8 @@ class Catalog extends egret.Sprite {
         this.addEventListener(egret.TouchEvent.TOUCH_TAP, (Event) => {
             Event.stopImmediatePropagation();
         }, this);
-        var catalog = BS.data.catalog;
-        // 创建背景图片
-        BS.creatBg(catalog.img, this);
+        const catalog = BS.data.catalog;
+        BS.creatBg(catalog.img, this); // 创建背景图片
         // 创建图片组
         catalog.picture.forEach(data => {
             BS.creatImg(data, this);
@@ -27,11 +26,11 @@ class Catalog extends egret.Sprite {
 
     // 设置滚动区
     private setText() {
-        var content = new egret.DisplayObjectContainer();
+        const content = new egret.DisplayObjectContainer();
         this.createConten(content);
-        var myscrollView:egret.ScrollView = new egret.ScrollView();
+        const myscrollView: egret.ScrollView = new egret.ScrollView();
         myscrollView.setContent(content);
-        if(BS.data.resolution === 1) {
+        if (BS.data.resolution === 1) {
             myscrollView.width = 500;
             myscrollView.height = 700;
         } else {
@@ -49,29 +48,30 @@ class Catalog extends egret.Sprite {
     private createConten(content) {
         const arr = [];
         arr.length = BS.data.page.length;
-        var j = 0;
+        let j = 0;
         for (let i = 0; i < arr.length; i++) {
             let text = new egret.TextField();
             text.textAlign = 'center';
             text.verticalAlign = 'middle';
             text.size = 24;
-            text.text = String(i+1);
-            if(BS.data.resolution === 1) {
+            text.text = String(i + 1);
+            // 竖屏
+            if (BS.data.resolution === 1) {
                 text.width = 100;
                 text.height = 70;
                 text.x = (i % 5) * 100;
-                text.y = j*70;
-                i%5 === 4 && j++;
-            } else {
+                text.y = j * 70;
+                i % 5 === 4 && j++;
+            } else { // 横屏
                 text.width = 88;
                 text.height = 40;
                 text.x = (i % 10) * 88;
-                text.y = j*40;
-                i%10 === 9 && j++;
+                text.y = j * 40;
+                i % 10 === 9 && j++;
             }
             text.touchEnabled = true;
             text.addEventListener(egret.TouchEvent.TOUCH_TAP, () => {
-                if(!BS.pageView.$hasAddToStage) {
+                if (!BS.pageView.$hasAddToStage) {
                     BS.pageView.skipIn = true;
                     this.stage.addChildAt(BS.pageView, 1);
                     this.stage.removeChild(BS.startView);
@@ -79,7 +79,7 @@ class Catalog extends egret.Sprite {
                     BS.menuModule.visible = false;
                     BS.btnMenu.visible = true;
                 }
-                BS.pageView.skip({page: i});
+                BS.pageView.skip({ page: i });
                 this.stage.removeChild(this);
             }, this);
             content.addChild(text);

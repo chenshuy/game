@@ -30,7 +30,7 @@ class Records extends egret.Sprite {
             });
         });
         this.record.picture.forEach((item) => {
-            if(item.type === 'save') {
+            if (item.type === 'save') {
                 let text = new egret.TextField();
                 text.text = '';
                 text.textColor = 0xffffff;
@@ -57,30 +57,13 @@ class Records extends egret.Sprite {
         });
     }
 
-    private skip(type, item) {
-        switch (type) {
-            case 'save':
-                if(BS.isRead) {
-                    this.read(item);
-                } else {
-                    this.save(item);
-                }
-                break;
-            case 'back':
-                BS.menuModule.visible = true;
-                this.stage.removeChild(BS.recordsModule);
-                break;
-            default:
-        }
-    }
-
     // 执行保存
     private save(item) {
-        var time = BS.getTime();
+        const time = BS.getTime();
         let index = {
             page: BS.pageView.pageI
         }
-        var data = this.localData ? this.localData : new Array(this.texts.length);
+        let data = this.localData ? this.localData : new Array(this.texts.length);
         data[item.biaoshi] = {
             time: time,
             index: index
@@ -91,8 +74,8 @@ class Records extends egret.Sprite {
 
     // 读取
     private read(item) {
-        if(this.localData[item.biaoshi] && this.localData[item.biaoshi].index) {
-            if(!BS.pageView.$hasAddToStage) {
+        if (this.localData[item.biaoshi] && this.localData[item.biaoshi].index) {
+            if (!BS.pageView.$hasAddToStage) {
                 BS.pageView.skipIn = true;
                 this.stage.addChildAt(BS.pageView, 1);
                 this.stage.removeChild(BS.startView);
@@ -102,6 +85,23 @@ class Records extends egret.Sprite {
             }
             BS.pageView.skip(this.localData[item.biaoshi].index);
             this.stage.removeChild(this);
+        }
+    }
+
+    private skip(type, item) {
+        switch (type) {
+            case 'save':
+                if (BS.isRead) {
+                    this.read(item);
+                } else {
+                    this.save(item);
+                }
+                break;
+            case 'back':
+                BS.menuModule.visible = true;
+                this.stage.removeChild(BS.recordsModule);
+                break;
+            default:
         }
     }
 }
